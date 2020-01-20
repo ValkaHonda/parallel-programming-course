@@ -1,0 +1,128 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+
+namespace WpfApp2
+{
+    public partial class MainWindow:Window
+    {
+        public MainWindow()
+        {
+            InitializeComponent();
+        }
+
+        Collection myCollection = new Collection();
+
+        private async void FirstButton_Click(object sender, RoutedEventArgs e)
+        {
+           int enteredID = int.Parse(firstTextBox.Text);
+           Customer foundCustomer = await myCollection.getCustomerByID(enteredID);
+           firstLabel.Content = foundCustomer.getName();
+        }
+
+        private async void SecondButton_Click(object sender, RoutedEventArgs e)
+        {
+            String[] enteredIDs = secondTextBox.Text.Split(' ');
+            int[] intIDs = Array.ConvertAll(enteredIDs, stringID => int.Parse(stringID));
+            Customer[] foundCustomers = await myCollection.findCustomersByIDs(intIDs);
+            for (int i = 0; i < foundCustomers.Length; i++)
+            {firstListBox.Items.Add(foundCustomers[i].getName());}
+        }
+
+        private async void ThirdButton_Click(object sender, RoutedEventArgs e)
+        {
+            Dictionary<String, int> foundWordOccurrences = await Task.Run(() => findWordOccurences());
+            foreach (KeyValuePair<String, int> entry in foundWordOccurrences)
+            {secondListBox.Items.Add(entry.Key+" "+entry.Value);}
+        }
+
+        public Dictionary<String, int> findWordOccurences()
+        {
+            String content = File.ReadAllText(@"C:\Users\Lenny\Desktop\Star Angel Data\ТУ\IV курс\7 семестър ФКСТ\Модул ПС\Паралелно програмиране\big.txt");
+            List<String> foundWords = new List<string>();
+            var matches = Regex.Matches(content, @"\w+");
+            Dictionary<String, int> foundWordOccurrences = new Dictionary<string, int>();
+            foreach (Match match in matches)
+            {
+                String foundWord = match.ToString().ToLower();
+
+                if (foundWordOccurrences.ContainsKey(foundWord)) {foundWordOccurrences[foundWord]++;}
+                else {foundWordOccurrences.Add(foundWord, 1);}
+            }
+
+            return foundWordOccurrences;
+        } 
+    }
+
+    public class Customer
+    {
+        private int ID;
+        private String name;
+        private String address;
+        private int orderNumber;
+
+        public Customer(int ID, String name, String address, int orderNumber)
+        {
+            this.ID = ID;
+            this.name = name;
+            this.address = address;
+            this.orderNumber = orderNumber;
+        }
+
+        public int getID() { return this.ID; }
+        public String getName() {return this.name;}
+    }
+
+    public class Collection
+    {
+        private List<Customer> customers = new List<Customer>();
+
+        public Collection()
+        {
+            customers.Add(new Customer(1, "Puffle5", "Curie", 1));
+            customers.Add(new Customer(2, "Emily", "Fourth Street", 2));
+            customers.Add(new Customer(3, "Nicolas", "Some Street", 3));
+        }
+
+        public async Task<Customer> getCustomerByID(int ID)
+        {
+            for (int i = 0; i < customers.Count; i++)
+            {
+                await Task.Delay(1000);
+                if (customers[i].getID() == ID)
+                {
+                    return customers[i];
+                }
+            }
+
+            return null;
+        }
+
+        public async Task<Customer[]> findCustomersByIDs(int[] IDs)
+        {
+            List<Task<Customer>> customerTasks = new List<Task<Customer>>();
+
+            for (int i = 0; i < customers.Count; i++)
+            {
+                int currentID = IDs[i];
+                customerTasks.Add(getCustomerByID(currentID));
+                
+            }
+
+            return await Task.WhenAll(customerTasks);
+        }
+    }
+}

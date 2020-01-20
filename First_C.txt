@@ -1,0 +1,107 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+using System.Net.Http;
+using System.Text.RegularExpressions;
+
+namespace FirstTask
+{
+    
+    public partial class MainWindow:Window
+    {
+        public MainWindow() {InitializeComponent();}
+
+        //private void Count()
+        //{
+        //    for (int i = 0; i < 100; i++)
+        //    {
+        //        third.Content = i.ToString();
+        //        Thread.Sleep(50);
+        //    }
+        //}
+
+        //async Task<Int32> GetResponseAsync(string URI)
+        //{
+        //    HttpClient client = new HttpClient();
+        //    Task<string> task = client.GetStringAsync(URI);
+
+        //    string myString = await task;
+        //    //Counting..
+        //    return myString.Length;
+
+        //}
+
+        //private void Button_Click(object sender, RoutedEventArgs e)
+        //{
+        //    //first.Content = DateTime.Now.ToLongTimeString();
+        //    Task<int> t1 = GetResponseAsync(txt.Text);
+        //    Task t2 = Task.Delay(1000);
+        //    await Task.WhenAny(t1, t2);
+
+        //    if (t1.IsCompleted)
+        //    {
+        //        Int32 myTask = t1.Result;
+        //        second.Content = myTask.ToString();
+        //    }
+
+        //    else { second.Content = "Timeout!"; }
+        //}
+
+//First Task from C# 1------------------------------------------------------
+        private async void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            firstLabel.Content = "Hello, World!";
+            secondLabel.Content = DateTime.Now;
+            firstButton.IsEnabled = false;
+            await GenerateNumbers();
+            firstButton.IsEnabled = true;
+            thirdLabel.Content = DateTime.Now;
+        }
+
+        private async Task GenerateNumbers()
+        {
+            Random random = new Random();
+
+            for (int i = 0; i < 100; i++)
+            {
+                int number = random.Next(1, 101);
+                firstLabel.Content = number;
+
+                await Task.Delay(1000);
+            }
+        }
+
+        //End of First Task from C# 1------------------------------------------------------
+
+        private async Task<int> CountImageOccurences(String URL)
+        {
+            HttpClient client = new HttpClient();
+            String myURL = await client.GetStringAsync(URL);
+            int count = Regex.Matches(myURL, "<img").Count;
+            return count;
+        }
+
+        private async void SecondButton_Click(object sender, RoutedEventArgs e)
+        {
+            String URL = firstTextBox.Text;
+            Task delayTask = Task.Delay(10);
+            Task<int> successTask = CountImageOccurences(URL);
+            await Task.WhenAny(delayTask, successTask);
+
+            if (successTask.IsCompleted) {fourthLabel.Content = await successTask;}
+
+            else {fourthLabel.Content = "Time Out!";}
+        }
+    }
+}
